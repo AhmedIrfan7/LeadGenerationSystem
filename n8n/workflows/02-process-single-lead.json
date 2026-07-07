@@ -1,0 +1,21 @@
+{
+  "name": "Process Single Lead",
+  "nodes": [
+    {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "name": "When Called by Orchestrator",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "notes": "Expected input: website_url, client_email, client_name, row_number"
+    }
+  ],
+  "connections": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
