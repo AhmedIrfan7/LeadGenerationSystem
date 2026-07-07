@@ -224,6 +224,18 @@
         "language": "javaScript",
         "jsCode": "const prev = $input.first().json;\nconst p = prev.palette;\n\nconst css = `:root{--color-primary:${p.primary};--color-secondary:${p.secondary};--color-accent:${p.accent};--color-background:${p.background};--color-text:${p.text};}\\nbody{font-family:'Inter',system-ui,sans-serif;background:var(--color-background);color:var(--color-text);}\\na{transition:opacity .2s ease;}\\na:hover{opacity:.85;}\\n::selection{background:var(--color-accent);color:#fff;}`;\n\nreturn [{ json: { ...prev, files: [...prev.files, { path: 'style.css', content: css }] } }];"
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-00000000000e",
+      "name": "Build Site Files (README)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2880, 220],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const prev = $input.first().json;\nconst spec = prev.spec;\nconst today = new Date().toISOString().slice(0, 10);\n\nconst readme = `# ${spec.businessName}\\n\\n${spec.tagline || ''}\\n\\nThis static site was automatically generated on ${today} as a redesign preview by an automated lead-generation pipeline.\\n\\n## Files\\n\\n- \\`index.html\\` \\u2014 the site\\n- \\`style.css\\` \\u2014 palette and base styles\\n\\nHosted via GitHub Pages. No build step required \\u2014 edit the HTML/CSS directly.`;\n\nreturn [{ json: { ...prev, files: [...prev.files, { path: 'README.md', content: readme }] } }];"
+      }
     }
   ],
   "connections": {
@@ -304,6 +316,13 @@
       "main": [
         [
           { "node": "Build Site Files (CSS)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Build Site Files (CSS)": {
+      "main": [
+        [
+          { "node": "Build Site Files (README)", "type": "main", "index": 0 }
         ]
       ]
     }
