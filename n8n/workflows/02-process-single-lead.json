@@ -212,6 +212,18 @@
         "language": "javaScript",
         "jsCode": "const spec = $input.first().json.spec;\nconst contactEmail = $('When Called by Orchestrator').first().json.client_email || '';\n\nconst palette = Object.assign({ primary: '#4f46e5', secondary: '#0ea5e9', accent: '#f59e0b', background: '#ffffff', text: '#111827' }, spec.colorPalette || {});\n\nconst esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\nconst renderSection = (s) => {\n  const heading = esc(s.heading);\n  const body = esc(s.body);\n  const items = s.items || [];\n  if (s.type === 'hero') {\n    return `<section id='hero' class='min-h-[80vh] flex flex-col items-center justify-center text-center px-6'><h1 class='text-4xl md:text-6xl font-extrabold mb-4' style='color:var(--color-primary)'>${heading}</h1><p class='text-lg md:text-2xl max-w-2xl mb-8'>${body}</p><a href='#contact' class='px-8 py-3 rounded-full font-semibold text-white' style='background:var(--color-primary)'>Get in touch</a></section>`;\n  }\n  if (s.type === 'services') {\n    const cards = items.map((it) => `<div class='p-6 rounded-2xl shadow-sm border' style='border-color:var(--color-secondary)'>${esc(it)}</div>`).join('');\n    return `<section id='services' class='py-20 px-6'><h2 class='text-3xl font-bold text-center mb-4' style='color:var(--color-primary)'>${heading}</h2><p class='text-center max-w-2xl mx-auto mb-10 opacity-80'>${body}</p><div class='grid gap-6 md:grid-cols-3 max-w-5xl mx-auto'>${cards}</div></section>`;\n  }\n  if (s.type === 'testimonials') {\n    const quotes = items.map((it) => `<blockquote class='p-6 rounded-2xl bg-white/10'>${esc(it)}<footer class='mt-4 text-sm opacity-80'>Verified client</footer></blockquote>`).join('');\n    return `<section id='testimonials' class='py-20 px-6' style='background:var(--color-secondary);color:#fff'><h2 class='text-3xl font-bold text-center mb-10'>${heading}</h2><div class='grid gap-6 md:grid-cols-3 max-w-5xl mx-auto'>${quotes}</div></section>`;\n  }\n  if (s.type === 'gallery') {\n    const tiles = items.map((it) => `<div class='aspect-video rounded-xl flex items-center justify-center text-white font-medium' style='background:var(--color-accent)'>${esc(it)}</div>`).join('');\n    return `<section id='gallery' class='py-20 px-6'><h2 class='text-3xl font-bold text-center mb-10' style='color:var(--color-primary)'>${heading}</h2><div class='grid gap-4 md:grid-cols-3 max-w-5xl mx-auto'>${tiles}</div></section>`;\n  }\n  if (s.type === 'contact') {\n    return `<section id='contact' class='py-20 px-6 text-center'><h2 class='text-3xl font-bold mb-4' style='color:var(--color-primary)'>${heading}</h2><p class='max-w-xl mx-auto mb-6 opacity-80'>${body}</p><a href='mailto:${esc(contactEmail)}' class='px-8 py-3 rounded-full font-semibold text-white' style='background:var(--color-primary)'>${esc(contactEmail)}</a></section>`;\n  }\n  const list = items.length ? `<ul class='mt-6 space-y-2 text-left max-w-md mx-auto'>${items.map((it) => `<li>${esc(it)}</li>`).join('')}</ul>` : '';\n  return `<section class='py-20 px-6 max-w-3xl mx-auto text-center'><h2 class='text-3xl font-bold mb-4' style='color:var(--color-primary)'>${heading}</h2><p class='opacity-80'>${body}</p>${list}</section>`;\n};\n\nconst sectionsHtml = (spec.sections || []).map(renderSection).join('\\n');\nconst year = new Date().getFullYear();\n\nconst html = `<!DOCTYPE html>\\n<html lang='en'>\\n<head>\\n<meta charset='UTF-8' />\\n<meta name='viewport' content='width=device-width, initial-scale=1.0' />\\n<title>${esc(spec.businessName)}</title>\\n<meta name='description' content='${esc(spec.seoDescription || spec.tagline || '')}' />\\n<script src='https://cdn.tailwindcss.com'></script>\\n<link rel='preconnect' href='https://fonts.googleapis.com'>\\n<link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap' rel='stylesheet'>\\n<link rel='stylesheet' href='style.css'>\\n</head>\\n<body class='antialiased'>\\n<nav class='flex items-center justify-between px-6 py-4 sticky top-0 z-10 backdrop-blur bg-white/70'>\\n<span class='font-extrabold text-lg' style='color:var(--color-primary)'>${esc(spec.businessName)}</span>\\n<span class='hidden md:block text-sm opacity-70'>${esc(spec.tagline || '')}</span>\\n</nav>\\n${sectionsHtml}\\n<footer class='text-center py-8 text-sm opacity-60'>&copy; ${year} ${esc(spec.businessName)}. Site generated automatically.</footer>\\n</body>\\n</html>`;\n\nreturn [{ json: { businessName: spec.businessName, spec, palette, files: [ { path: 'index.html', content: html } ] } }];"
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-00000000000d",
+      "name": "Build Site Files (CSS)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2660, 220],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const prev = $input.first().json;\nconst p = prev.palette;\n\nconst css = `:root{--color-primary:${p.primary};--color-secondary:${p.secondary};--color-accent:${p.accent};--color-background:${p.background};--color-text:${p.text};}\\nbody{font-family:'Inter',system-ui,sans-serif;background:var(--color-background);color:var(--color-text);}\\na{transition:opacity .2s ease;}\\na:hover{opacity:.85;}\\n::selection{background:var(--color-accent);color:#fff;}`;\n\nreturn [{ json: { ...prev, files: [...prev.files, { path: 'style.css', content: css }] } }];"
+      }
     }
   ],
   "connections": {
@@ -285,6 +297,13 @@
       "main": [
         [
           { "node": "Build Site Files (HTML)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Build Site Files (HTML)": {
+      "main": [
+        [
+          { "node": "Build Site Files (CSS)", "type": "main", "index": 0 }
         ]
       ]
     }
