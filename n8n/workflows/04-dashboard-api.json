@@ -64,6 +64,107 @@
         "responseBody": "={{ $json }}",
         "options": {}
       }
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000005",
+      "name": "POST /leads/retry",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 460],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "leads/retry",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000006",
+      "name": "Extract Row Number",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 460],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const raw = $input.first().json.body || {};\nconst rowNumber = parseInt(raw.row_number, 10);\n\nreturn [{ json: { rowNumber, valid: Number.isInteger(rowNumber) && rowNumber >= 2 } }];"
+      }
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000007",
+      "name": "Valid Row Number?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [680, 460],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000008",
+      "name": "Mark Row Retry",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 400],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "Replace YOUR_SPREADSHEET_ID with the real sheet ID.",
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/YOUR_SPREADSHEET_ID/values/Leads!D{{ $json.rowNumber }}?valueInputOption=RAW",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { values: [ ['Retry'] ] } }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PLACEHOLDER",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000009",
+      "name": "Respond Retry OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1120, 400],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "40000000-0000-4000-8000-00000000000a",
+      "name": "Respond Retry Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 560],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, error: 'invalid or missing row_number' } }}",
+        "options": {
+          "responseCode": 400
+        }
+      }
     }
   ],
   "connections": {
@@ -85,6 +186,37 @@
       "main": [
         [
           { "node": "Respond With Leads", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "POST /leads/retry": {
+      "main": [
+        [
+          { "node": "Extract Row Number", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Extract Row Number": {
+      "main": [
+        [
+          { "node": "Valid Row Number?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Valid Row Number?": {
+      "main": [
+        [
+          { "node": "Mark Row Retry", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Respond Retry Error", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Mark Row Retry": {
+      "main": [
+        [
+          { "node": "Respond Retry OK", "type": "main", "index": 0 }
         ]
       ]
     }
