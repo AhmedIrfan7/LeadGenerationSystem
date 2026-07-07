@@ -664,6 +664,18 @@
           "name": "GitHub PAT"
         }
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000021",
+      "name": "Compute Live URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [6620, 220],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const data = $('Compute Repo Name').first().json;\nconst owner = 'AhmedIrfan7';\nconst liveUrl = `https://${owner}.github.io/${data.repoName}/`;\n\nreturn [{ json: { ...data, liveUrl } }];"
+      }
     }
   ],
   "connections": {
@@ -860,7 +872,9 @@
     },
     "Pages Built?": {
       "main": [
-        [],
+        [
+          { "node": "Compute Live URL", "type": "main", "index": 0 }
+        ],
         [
           { "node": "Wait Extra for Pages Build", "type": "main", "index": 0 }
         ]
@@ -870,6 +884,13 @@
       "main": [
         [
           { "node": "Recheck Pages Status", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Recheck Pages Status": {
+      "main": [
+        [
+          { "node": "Compute Live URL", "type": "main", "index": 0 }
         ]
       ]
     }
