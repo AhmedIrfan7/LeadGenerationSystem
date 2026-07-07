@@ -1,0 +1,73 @@
+{
+  "name": "Error Notifier",
+  "nodes": [
+    {
+      "id": "30000000-0000-4000-8000-000000000001",
+      "name": "On Any Workflow Error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "notes": "Set as the Error Workflow (in workflow Settings) for both the Orchestrator and Process Single Lead. Fires only on uncaught crashes, not on expected per-lead failures already handled by their own Stop-And-Error branches.",
+      "parameters": {}
+    },
+    {
+      "id": "30000000-0000-4000-8000-000000000002",
+      "name": "Format Error Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Error Trigger's item shape varies slightly across n8n versions, so every field is read defensively with a fallback.",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const d = $input.first().json;\n\nconst workflowName = (d.workflow && d.workflow.name) || 'Unknown workflow';\nconst nodeName = (d.node && d.node.name) || d.lastNodeExecuted || 'Unknown node';\nconst message = (d.error && d.error.message) || d.errorMessage || JSON.stringify(d).slice(0, 500);\nconst executionUrl = (d.execution && d.execution.url) || '';\n\nreturn [{ json: { workflowName, nodeName, message, executionUrl } }];"
+      }
+    },
+    {
+      "id": "30000000-0000-4000-8000-000000000003",
+      "name": "Alert Admin of Crash",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [680, 300],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "notes": "Replace the placeholder recipient with the real team inbox.",
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "admin-placeholder@example.com",
+        "subject": "=Lead-Gen crash: {{ $json.workflowName }}",
+        "emailType": "text",
+        "message": "={{ 'Workflow: ' + $json.workflowName + '\\nNode: ' + $json.nodeName + '\\nError: ' + $json.message + '\\nExecution: ' + $json.executionUrl }}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PLACEHOLDER",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "On Any Workflow Error": {
+      "main": [
+        [
+          { "node": "Format Error Alert", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Format Error Alert": {
+      "main": [
+        [
+          { "node": "Alert Admin of Crash", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
