@@ -357,6 +357,48 @@
         "include": "allOtherFields",
         "options": {}
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000015",
+      "name": "Get Existing File SHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4200, 140],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500,
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "notes": "404 (file does not exist yet) is expected on first deploy and is not an error.",
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.github.com/repos/AhmedIrfan7/{{ $json.repoName }}/contents/{{ $json.path }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json",
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "PLACEHOLDER",
+          "name": "GitHub PAT"
+        }
+      }
     }
   ],
   "connections": {
@@ -482,6 +524,13 @@
       "main": [
         [
           { "node": "Split Out Files", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Split Out Files": {
+      "main": [
+        [
+          { "node": "Get Existing File SHA", "type": "main", "index": 0 }
         ]
       ]
     }
