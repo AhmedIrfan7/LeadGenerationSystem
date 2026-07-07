@@ -53,6 +53,18 @@
         "language": "javaScript",
         "jsCode": "const values = $input.first().json.values || [];\nconst dataRows = values.slice(1);\n\nconst items = [];\ndataRows.forEach((row, idx) => {\n  const [website_url, client_email, client_name, status] = row;\n  const normalizedStatus = (status || '').trim();\n  if (!website_url || !client_email) return;\n  if (normalizedStatus !== '' && normalizedStatus !== 'Retry') return;\n  items.push({\n    json: {\n      row_number: idx + 2,\n      website_url,\n      client_email,\n      client_name: client_name || ''\n    }\n  });\n});\n\nreturn items;"
       }
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000004",
+      "name": "Normalize Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const row = $json;\n\nlet url = (row.website_url || '').trim();\nif (url && !/^https?:\\/\\//i.test(url)) {\n  url = 'https://' + url;\n}\n\nconst client_email = (row.client_email || '').trim();\nconst emailPrefix = client_email.split('@')[0] || 'there';\nconst client_name = (row.client_name || '').trim() || emailPrefix;\n\nreturn {\n  json: {\n    ...row,\n    website_url: url,\n    client_email,\n    client_name\n  }\n};"
+      }
     }
   ],
   "connections": {
@@ -67,6 +79,13 @@
       "main": [
         [
           { "node": "Parse & Filter New/Retry Rows", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Parse & Filter New/Retry Rows": {
+      "main": [
+        [
+          { "node": "Normalize Row", "type": "main", "index": 0 }
         ]
       ]
     }
