@@ -82,6 +82,30 @@
         "errorType": "errorMessage",
         "errorMessage": "=Website unreachable or returned empty content: {{ $('When Called by Orchestrator').item.json.website_url }} (status {{ $json.statusCode }})"
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000005",
+      "name": "Extract Homepage Content",
+      "type": "n8n-nodes-base.htmlExtract",
+      "typeVersion": 1.2,
+      "position": [900, 220],
+      "parameters": {
+        "sourceData": "json",
+        "dataPropertyName": "body",
+        "extractionValues": {
+          "values": [
+            { "key": "title", "cssSelector": "title", "returnValue": "text" },
+            {
+              "key": "metaDescription",
+              "cssSelector": "meta[name='description']",
+              "returnValue": "attribute",
+              "returnAttribute": "content"
+            },
+            { "key": "bodyText", "cssSelector": "body", "returnValue": "text" }
+          ]
+        },
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -101,7 +125,9 @@
     },
     "Response OK?": {
       "main": [
-        [],
+        [
+          { "node": "Extract Homepage Content", "type": "main", "index": 0 }
+        ],
         [
           { "node": "Stop: Site Unreachable", "type": "main", "index": 0 }
         ]
