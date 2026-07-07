@@ -186,6 +186,19 @@
           "name": "OpenAI API"
         }
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-00000000000b",
+      "name": "Parse Site Spec",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 220],
+      "notes": "Throws (fails the node/execution) on malformed or incomplete AI output rather than deploying a broken site.",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const res = $input.first().json;\nconst raw = res && res.choices && res.choices[0] && res.choices[0].message\n  ? res.choices[0].message.content\n  : undefined;\n\nlet spec;\ntry {\n  spec = JSON.parse(raw);\n} catch (e) {\n  throw new Error('OpenAI returned invalid JSON for site spec: ' + String(raw).slice(0, 300));\n}\n\nconst required = ['businessName', 'tagline', 'colorPalette', 'sections'];\nconst missing = required.filter((k) => !(k in spec));\nif (missing.length) {\n  throw new Error('Site spec missing required fields: ' + missing.join(', '));\n}\nif (!Array.isArray(spec.sections) || spec.sections.length === 0) {\n  throw new Error('Site spec has no sections');\n}\n\nreturn [{ json: { spec } }];"
+      }
     }
   ],
   "connections": {
@@ -245,6 +258,13 @@
       "main": [
         [
           { "node": "Generate Site Spec (OpenAI)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Generate Site Spec (OpenAI)": {
+      "main": [
+        [
+          { "node": "Parse Site Spec", "type": "main", "index": 0 }
         ]
       ]
     }
