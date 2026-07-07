@@ -332,6 +332,31 @@
         "errorType": "errorMessage",
         "errorMessage": "=GitHub repo creation failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.body) }}"
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000013",
+      "name": "Restore Lead Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3760, 140],
+      "notes": "The GitHub create-repo response overwrote the item JSON; pull the file list and repo name back from Compute Repo Name before splitting into per-file upload items.",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return [{ json: $('Compute Repo Name').first().json }];"
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000014",
+      "name": "Split Out Files",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [3980, 140],
+      "parameters": {
+        "fieldToSplitOut": "files",
+        "include": "allOtherFields",
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -445,9 +470,18 @@
     },
     "Repo Created or Exists?": {
       "main": [
-        [],
+        [
+          { "node": "Restore Lead Data", "type": "main", "index": 0 }
+        ],
         [
           { "node": "Stop: GitHub Repo Creation Failed", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Restore Lead Data": {
+      "main": [
+        [
+          { "node": "Split Out Files", "type": "main", "index": 0 }
         ]
       ]
     }
