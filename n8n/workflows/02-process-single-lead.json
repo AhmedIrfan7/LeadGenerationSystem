@@ -11,9 +11,47 @@
         "inputSource": "passthrough"
       },
       "notes": "Expected input: website_url, client_email, client_name, row_number"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000002",
+      "name": "Scrape Homepage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.website_url }}",
+        "authentication": "none",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "text",
+              "neverError": true
+            }
+          },
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      }
     }
   ],
-  "connections": {},
+  "connections": {
+    "When Called by Orchestrator": {
+      "main": [
+        [
+          { "node": "Scrape Homepage", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
   "active": false,
   "settings": {
     "executionOrder": "v1"
