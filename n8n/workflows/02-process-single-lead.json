@@ -701,6 +701,19 @@
           "name": "Gmail account"
         }
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000023",
+      "name": "Format Success Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [7060, 220],
+      "notes": "Final node of this workflow. Its output is what the orchestrator (Workflow A) reads via the Execute Workflow node to update the sheet.",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const data = $input.first().json;\nconst rowNumber = $('When Called by Orchestrator').first().json.row_number;\n\nreturn [{\n  json: {\n    success: true,\n    rowNumber,\n    repoName: data.repoName,\n    liveUrl: data.liveUrl,\n    businessName: data.businessName\n  }\n}];"
+      }
     }
   ],
   "connections": {
@@ -923,6 +936,13 @@
       "main": [
         [
           { "node": "Send Client Email", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Send Client Email": {
+      "main": [
+        [
+          { "node": "Format Success Output", "type": "main", "index": 0 }
         ]
       ]
     }
