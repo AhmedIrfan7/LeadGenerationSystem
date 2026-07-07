@@ -249,6 +249,89 @@
         "language": "javaScript",
         "jsCode": "const prev = $input.first().json;\nconst rowNumber = $('When Called by Orchestrator').first().json.row_number;\n\nconst slug = (prev.businessName || 'site')\n  .toLowerCase()\n  .replace(/[^a-z0-9]+/g, '-')\n  .replace(/^-+|-+$/g, '')\n  .slice(0, 80) || 'site';\n\nconst repoName = `${slug}-lead-${rowNumber}`;\n\nreturn [{ json: { ...prev, repoName } }];"
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000010",
+      "name": "Create GitHub Repo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3320, 220],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "notes": "Owner is hardcoded to the team GitHub account (AhmedIrfan7) that hosts every generated site. Change if deploying under a different account/org.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/user/repos",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { name: $json.repoName, description: 'Auto-generated preview site for ' + $json.businessName, auto_init: true, private: false } }}",
+        "options": {
+          "timeout": 20000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json",
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "PLACEHOLDER",
+          "name": "GitHub PAT"
+        }
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000011",
+      "name": "Repo Created or Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [3540, 220],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "combinator": "or",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 201,
+              "operator": { "type": "number", "operation": "equals" }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 422,
+              "operator": { "type": "number", "operation": "equals" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000012",
+      "name": "Stop: GitHub Repo Creation Failed",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [3540, 380],
+      "parameters": {
+        "errorType": "errorMessage",
+        "errorMessage": "=GitHub repo creation failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.body) }}"
+      }
     }
   ],
   "connections": {
@@ -343,6 +426,28 @@
       "main": [
         [
           { "node": "Compute Repo Name", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Compute Repo Name": {
+      "main": [
+        [
+          { "node": "Create GitHub Repo", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Create GitHub Repo": {
+      "main": [
+        [
+          { "node": "Repo Created or Exists?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Repo Created or Exists?": {
+      "main": [
+        [],
+        [
+          { "node": "Stop: GitHub Repo Creation Failed", "type": "main", "index": 0 }
         ]
       ]
     }
