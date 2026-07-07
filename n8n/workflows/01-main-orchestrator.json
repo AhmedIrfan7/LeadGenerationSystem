@@ -178,6 +178,60 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "id": "20000000-0000-4000-8000-00000000000a",
+      "name": "Mark Row Failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 420],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/YOUR_SPREADSHEET_ID/values/Leads!D{{ $('Restore Row Data').item.json.row_number }}:H{{ $('Restore Row Data').item.json.row_number }}?valueInputOption=RAW",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { values: [ [ 'Failed', '', '', (typeof $json.error === 'string' ? $json.error : ($json.error && $json.error.message) || 'Unknown error'), new Date().toISOString() ] ] } }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PLACEHOLDER",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "20000000-0000-4000-8000-00000000000b",
+      "name": "Notify Admin of Failure",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [2220, 420],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "notes": "Replace the placeholder recipient with the real team inbox that should get failure alerts.",
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "admin-placeholder@example.com",
+        "subject": "=Lead-Gen: row {{ $('Restore Row Data').item.json.row_number }} failed",
+        "emailType": "text",
+        "message": "={{ 'Website: ' + $('Restore Row Data').item.json.website_url + '\\nClient: ' + $('Restore Row Data').item.json.client_email + '\\nError: ' + (typeof $json.error === 'string' ? $json.error : ($json.error && $json.error.message) || 'Unknown error') }}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PLACEHOLDER",
+          "name": "Gmail account"
+        }
+      }
     }
   ],
   "connections": {
@@ -232,9 +286,18 @@
     },
     "Execution Failed?": {
       "main": [
-        [],
+        [
+          { "node": "Mark Row Failed", "type": "main", "index": 0 }
+        ],
         [
           { "node": "Mark Row Done", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Mark Row Failed": {
+      "main": [
+        [
+          { "node": "Notify Admin of Failure", "type": "main", "index": 0 }
         ]
       ]
     }
