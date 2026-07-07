@@ -131,6 +131,19 @@
         "language": "javaScript",
         "jsCode": "const baseUrl = $('When Called by Orchestrator').first().json.website_url;\nconst html = $('Scrape Homepage').first().json.body || '';\nconst prev = $input.first().json;\n\nconst hrefRegex = /href=[\"']([^\"'#]+)[\"']/gi;\nconst keywords = ['about', 'service', 'contact'];\nconst origin = new URL(baseUrl).origin;\nconst found = new Set();\nlet m;\nwhile ((m = hrefRegex.exec(html)) !== null) {\n  const href = m[1];\n  if (!keywords.some((k) => href.toLowerCase().includes(k))) continue;\n  try {\n    const abs = new URL(href, baseUrl).toString();\n    if (new URL(abs).origin === origin) found.add(abs);\n  } catch (e) {\n    // malformed href, skip\n  }\n}\n\nreturn [{\n  json: {\n    ...prev,\n    internalLinks: Array.from(found).slice(0, 2)\n  }\n}];"
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000008",
+      "name": "Scrape Internal Pages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 220],
+      "notes": "Best-effort enrichment: failures on individual internal pages are swallowed, never block the pipeline.",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const prev = $input.first().json;\nconst links = prev.internalLinks || [];\n\nconst stripHtml = (html) => html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst extraPagesText = [];\nfor (const url of links) {\n  try {\n    const res = await this.helpers.httpRequest({\n      method: 'GET',\n      url,\n      timeout: 10000,\n      returnFullResponse: true\n    });\n    const text = stripHtml(String(res.body || ''));\n    if (text) extraPagesText.push(text.slice(0, 1500));\n  } catch (e) {\n    // best-effort enrichment, skip failed page\n  }\n}\n\nreturn [{\n  json: {\n    ...prev,\n    extraPagesText\n  }\n}];"
+      }
     }
   ],
   "connections": {
@@ -169,6 +182,13 @@
       "main": [
         [
           { "node": "Find Internal Links", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Find Internal Links": {
+      "main": [
+        [
+          { "node": "Scrape Internal Pages", "type": "main", "index": 0 }
         ]
       ]
     }
