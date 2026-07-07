@@ -41,6 +41,47 @@
           }
         }
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000003",
+      "name": "Response OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [680, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": { "type": "number", "operation": "equals" }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.body ? $json.body.length : 0 }}",
+              "rightValue": 200,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000004",
+      "name": "Stop: Site Unreachable",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [900, 460],
+      "parameters": {
+        "errorType": "errorMessage",
+        "errorMessage": "=Website unreachable or returned empty content: {{ $('When Called by Orchestrator').item.json.website_url }} (status {{ $json.statusCode }})"
+      }
     }
   ],
   "connections": {
@@ -48,6 +89,21 @@
       "main": [
         [
           { "node": "Scrape Homepage", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Scrape Homepage": {
+      "main": [
+        [
+          { "node": "Response OK?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Response OK?": {
+      "main": [
+        [],
+        [
+          { "node": "Stop: Site Unreachable", "type": "main", "index": 0 }
         ]
       ]
     }
