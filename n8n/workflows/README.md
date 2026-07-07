@@ -16,3 +16,17 @@ workflow ID once it exists in your n8n instance.
 After importing, open each workflow and re-select credentials (n8n does not
 export credential secrets, only credential *names/types* as placeholders).
 See [../../docs/SETUP.md](../../docs/SETUP.md).
+
+## Manual links required after import (workflow IDs are instance-specific)
+
+n8n assigns a new workflow ID on every import, so these can't be baked into
+the JSON ahead of time — set them once, right after importing all 4 files:
+
+1. **01 → 02**: open `Lead-Gen Orchestrator` → `Call Process Single Lead`
+   node → set its workflow reference to your imported `Process Single Lead`.
+   Also confirm the run mode is "Run once for each item".
+2. **01 & 02 → 03**: open each workflow's Settings (top-right menu) → Error
+   Workflow → select `Error Notifier`.
+3. Replace every `YOUR_SPREADSHEET_ID` and `admin-placeholder@example.com`
+   placeholder (search-and-replace across the 4 files works fine) with your
+   real sheet ID and admin inbox.

@@ -304,6 +304,7 @@
   },
   "active": false,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "errorWorkflow": "REPLACE_WITH_ERROR_NOTIFIER_WORKFLOW_ID"
   }
 }
