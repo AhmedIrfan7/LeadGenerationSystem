@@ -399,6 +399,53 @@
           "name": "GitHub PAT"
         }
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000016",
+      "name": "Encode File Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4420, 140],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const shaResp = $json;\nconst orig = $('Split Out Files').item.json;\n\nlet sha;\nif (shaResp.statusCode === 200 && shaResp.body && shaResp.body.sha) {\n  sha = shaResp.body.sha;\n}\n\nreturn {\n  json: {\n    ...orig,\n    contentBase64: Buffer.from(orig.content, 'utf8').toString('base64'),\n    sha\n  }\n};"
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000017",
+      "name": "Create or Update File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4640, 140],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/AhmedIrfan7/{{ $json.repoName }}/contents/{{ $json.path }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ Object.assign({ message: ($json.sha ? 'Update ' : 'Add ') + $json.path, content: $json.contentBase64 }, $json.sha ? { sha: $json.sha } : {}) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "PLACEHOLDER",
+          "name": "GitHub PAT"
+        }
+      }
     }
   ],
   "connections": {
@@ -531,6 +578,20 @@
       "main": [
         [
           { "node": "Get Existing File SHA", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Get Existing File SHA": {
+      "main": [
+        [
+          { "node": "Encode File Content", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Encode File Content": {
+      "main": [
+        [
+          { "node": "Create or Update File", "type": "main", "index": 0 }
         ]
       ]
     }
