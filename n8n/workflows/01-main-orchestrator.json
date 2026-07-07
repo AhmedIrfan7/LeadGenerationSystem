@@ -1,0 +1,78 @@
+{
+  "name": "Lead-Gen Orchestrator",
+  "nodes": [
+    {
+      "id": "20000000-0000-4000-8000-000000000001",
+      "name": "Poll Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "minutes", "minutesInterval": 5 }
+          ]
+        }
+      }
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000002",
+      "name": "Get Sheet Rows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "Replace YOUR_SPREADSHEET_ID with the real sheet ID from its URL. Columns A-H must match docs/GOOGLE_SHEET_SCHEMA.md exactly.",
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/YOUR_SPREADSHEET_ID/values/Leads!A:H",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PLACEHOLDER",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000003",
+      "name": "Parse & Filter New/Retry Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "notes": "Column order (A-H): website_url, client_email, client_name, status, repo_name, live_url, error_message, processed_at. Row 1 is the header, so data starts at row 2.",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const values = $input.first().json.values || [];\nconst dataRows = values.slice(1);\n\nconst items = [];\ndataRows.forEach((row, idx) => {\n  const [website_url, client_email, client_name, status] = row;\n  const normalizedStatus = (status || '').trim();\n  if (!website_url || !client_email) return;\n  if (normalizedStatus !== '' && normalizedStatus !== 'Retry') return;\n  items.push({\n    json: {\n      row_number: idx + 2,\n      website_url,\n      client_email,\n      client_name: client_name || ''\n    }\n  });\n});\n\nreturn items;"
+      }
+    }
+  ],
+  "connections": {
+    "Poll Every 5 Minutes": {
+      "main": [
+        [
+          { "node": "Get Sheet Rows", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Get Sheet Rows": {
+      "main": [
+        [
+          { "node": "Parse & Filter New/Retry Rows", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
