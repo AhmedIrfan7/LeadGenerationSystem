@@ -156,6 +156,36 @@
         "language": "javaScript",
         "jsCode": "const d = $input.first().json;\n\nconst parts = [d.homepageText || '', ...(d.extraPagesText || [])];\nconst aggregatedContent = parts\n  .join(' \\n\\n ')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .slice(0, 6000);\n\nconst businessNameGuess = (d.title || '')\n  .split(/[-|\\u2013]/)[0]\n  .trim() || 'this business';\n\nreturn [{\n  json: {\n    businessNameGuess,\n    metaDescription: d.metaDescription || '',\n    aggregatedContent\n  }\n}];"
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-00000000000a",
+      "name": "Generate Site Spec (OpenAI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 220],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "continueOnFail": false,
+      "notes": "Calls OpenAI Chat Completions directly (not the native node) so the JSON response_format contract is exact and hand-verifiable.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { model: 'gpt-4o-mini', temperature: 0.7, response_format: { type: 'json_object' }, messages: [ { role: 'system', content: 'You are an expert web designer and copywriter. Given raw scraped content from a business website, produce a complete redesign brief as strict JSON only — no markdown, no commentary, no code fences. JSON shape: { businessName: string, tagline: string, colorPalette: { primary, secondary, accent, background, text } (hex colors), seoDescription: string under 160 characters, sections: array of { type: one of hero, about, services, testimonials, gallery, contact; heading: string; body: string; items: optional array of short strings } }. Sections must include at least hero, about, services, and contact. Use a modern, cohesive color palette. Testimonials must be clearly generic placeholders, not real names or claims.' }, { role: 'user', content: 'Business name guess: ' + $json.businessNameGuess + '\\nMeta description: ' + $json.metaDescription + '\\n\\nScraped website content:\\n' + $json.aggregatedContent } ] } }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "PLACEHOLDER",
+          "name": "OpenAI API"
+        }
+      }
     }
   ],
   "connections": {
@@ -208,6 +238,13 @@
       "main": [
         [
           { "node": "Aggregate Scraped Content", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Aggregate Scraped Content": {
+      "main": [
+        [
+          { "node": "Generate Site Spec (OpenAI)", "type": "main", "index": 0 }
         ]
       ]
     }
