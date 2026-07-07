@@ -106,6 +106,18 @@
         },
         "options": {}
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000006",
+      "name": "Sanitize Homepage Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 220],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const item = $input.first().json;\n\nconst clean = (item.bodyText || '')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .slice(0, 4000);\n\nreturn [{\n  json: {\n    title: (item.title || '').trim(),\n    metaDescription: (item.metaDescription || '').trim(),\n    homepageText: clean\n  }\n}];"
+      }
     }
   ],
   "connections": {
@@ -130,6 +142,13 @@
         ],
         [
           { "node": "Stop: Site Unreachable", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Extract Homepage Content": {
+      "main": [
+        [
+          { "node": "Sanitize Homepage Text", "type": "main", "index": 0 }
         ]
       ]
     }
