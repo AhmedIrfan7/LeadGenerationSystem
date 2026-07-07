@@ -1,0 +1,9 @@
+{
+  "name": "lead-generation-system",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Automated pipeline: scrape prospect site -> AI-generate redesign -> deploy to GitHub Pages -> email client the preview.",
+  "scripts": {
+    "validate": "node scripts/validate-workflows.js"
+  }
+}
