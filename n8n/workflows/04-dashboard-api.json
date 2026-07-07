@@ -1,0 +1,96 @@
+{
+  "name": "Dashboard API",
+  "nodes": [
+    {
+      "id": "40000000-0000-4000-8000-000000000001",
+      "name": "GET /leads",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 220],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "leads",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000002",
+      "name": "Get Sheet Rows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 220],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "Replace YOUR_SPREADSHEET_ID with the real sheet ID.",
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/YOUR_SPREADSHEET_ID/values/Leads!A:H",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PLACEHOLDER",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000003",
+      "name": "Rows To JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 220],
+      "notes": "Column order (A-H): website_url, client_email, client_name, status, repo_name, live_url, error_message, processed_at.",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const values = $input.first().json.values || [];\nconst dataRows = values.slice(1);\n\nconst leads = dataRows.map((row, idx) => {\n  const [website_url, client_email, client_name, status, repo_name, live_url, error_message, processed_at] = row;\n  return {\n    row_number: idx + 2,\n    website_url: website_url || '',\n    client_email: client_email || '',\n    client_name: client_name || '',\n    status: status || 'Pending',\n    repo_name: repo_name || '',\n    live_url: live_url || '',\n    error_message: error_message || '',\n    processed_at: processed_at || ''\n  };\n}).filter((lead) => lead.website_url);\n\nreturn [{ json: { leads } }];"
+      }
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000004",
+      "name": "Respond With Leads",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 220],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "GET /leads": {
+      "main": [
+        [
+          { "node": "Get Sheet Rows", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Get Sheet Rows": {
+      "main": [
+        [
+          { "node": "Rows To JSON", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Rows To JSON": {
+      "main": [
+        [
+          { "node": "Respond With Leads", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
