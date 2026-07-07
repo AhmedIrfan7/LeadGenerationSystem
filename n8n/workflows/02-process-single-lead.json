@@ -446,6 +446,102 @@
           "name": "GitHub PAT"
         }
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000018",
+      "name": "Collapse After Upload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4860, 140],
+      "notes": "Re-syncs the N per-file items back to a single item before enabling Pages (which is a one-time, repo-level action, not per-file).",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return [{ json: $('Compute Repo Name').first().json }];"
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000019",
+      "name": "Enable GitHub Pages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [5080, 140],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "notes": "Assumes the auto-initialized repo's default branch is 'main' (GitHub's default since 2020).",
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/AhmedIrfan7/{{ $json.repoName }}/pages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { source: { branch: 'main', path: '/' } } }}",
+        "options": {
+          "timeout": 20000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json",
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "PLACEHOLDER",
+          "name": "GitHub PAT"
+        }
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-00000000001a",
+      "name": "Pages Enabled or Already Enabled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [5300, 140],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "combinator": "or",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 201,
+              "operator": { "type": "number", "operation": "equals" }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 409,
+              "operator": { "type": "number", "operation": "equals" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-00000000001b",
+      "name": "Stop: GitHub Pages Enable Failed",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [5300, 300],
+      "parameters": {
+        "errorType": "errorMessage",
+        "errorMessage": "=Enabling GitHub Pages failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.body) }}"
+      }
     }
   ],
   "connections": {
@@ -592,6 +688,35 @@
       "main": [
         [
           { "node": "Create or Update File", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Create or Update File": {
+      "main": [
+        [
+          { "node": "Collapse After Upload", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Collapse After Upload": {
+      "main": [
+        [
+          { "node": "Enable GitHub Pages", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Enable GitHub Pages": {
+      "main": [
+        [
+          { "node": "Pages Enabled or Already Enabled?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Pages Enabled or Already Enabled?": {
+      "main": [
+        [],
+        [
+          { "node": "Stop: GitHub Pages Enable Failed", "type": "main", "index": 0 }
         ]
       ]
     }
