@@ -144,6 +144,18 @@
         "language": "javaScript",
         "jsCode": "const prev = $input.first().json;\nconst links = prev.internalLinks || [];\n\nconst stripHtml = (html) => html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst extraPagesText = [];\nfor (const url of links) {\n  try {\n    const res = await this.helpers.httpRequest({\n      method: 'GET',\n      url,\n      timeout: 10000,\n      returnFullResponse: true\n    });\n    const text = stripHtml(String(res.body || ''));\n    if (text) extraPagesText.push(text.slice(0, 1500));\n  } catch (e) {\n    // best-effort enrichment, skip failed page\n  }\n}\n\nreturn [{\n  json: {\n    ...prev,\n    extraPagesText\n  }\n}];"
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000009",
+      "name": "Aggregate Scraped Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 220],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const d = $input.first().json;\n\nconst parts = [d.homepageText || '', ...(d.extraPagesText || [])];\nconst aggregatedContent = parts\n  .join(' \\n\\n ')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .slice(0, 6000);\n\nconst businessNameGuess = (d.title || '')\n  .split(/[-|\\u2013]/)[0]\n  .trim() || 'this business';\n\nreturn [{\n  json: {\n    businessNameGuess,\n    metaDescription: d.metaDescription || '',\n    aggregatedContent\n  }\n}];"
+      }
     }
   ],
   "connections": {
@@ -189,6 +201,13 @@
       "main": [
         [
           { "node": "Scrape Internal Pages", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Scrape Internal Pages": {
+      "main": [
+        [
+          { "node": "Aggregate Scraped Content", "type": "main", "index": 0 }
         ]
       ]
     }
