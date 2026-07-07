@@ -150,6 +150,34 @@
           ]
         }
       }
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000009",
+      "name": "Mark Row Done",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 180],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/YOUR_SPREADSHEET_ID/values/Leads!D{{ $('Restore Row Data').item.json.row_number }}:H{{ $('Restore Row Data').item.json.row_number }}?valueInputOption=RAW",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { values: [ [ 'Done', $json.repoName, $json.liveUrl, '', new Date().toISOString() ] ] } }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PLACEHOLDER",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
   "connections": {
@@ -199,6 +227,14 @@
       "main": [
         [
           { "node": "Execution Failed?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Execution Failed?": {
+      "main": [
+        [],
+        [
+          { "node": "Mark Row Done", "type": "main", "index": 0 }
         ]
       ]
     }
