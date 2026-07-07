@@ -118,6 +118,19 @@
         "language": "javaScript",
         "jsCode": "const item = $input.first().json;\n\nconst clean = (item.bodyText || '')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .slice(0, 4000);\n\nreturn [{\n  json: {\n    title: (item.title || '').trim(),\n    metaDescription: (item.metaDescription || '').trim(),\n    homepageText: clean\n  }\n}];"
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000007",
+      "name": "Find Internal Links",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 220],
+      "notes": "Looks for About/Services/Contact pages on the same origin, capped at 2, for richer AI context.",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const baseUrl = $('When Called by Orchestrator').first().json.website_url;\nconst html = $('Scrape Homepage').first().json.body || '';\nconst prev = $input.first().json;\n\nconst hrefRegex = /href=[\"']([^\"'#]+)[\"']/gi;\nconst keywords = ['about', 'service', 'contact'];\nconst origin = new URL(baseUrl).origin;\nconst found = new Set();\nlet m;\nwhile ((m = hrefRegex.exec(html)) !== null) {\n  const href = m[1];\n  if (!keywords.some((k) => href.toLowerCase().includes(k))) continue;\n  try {\n    const abs = new URL(href, baseUrl).toString();\n    if (new URL(abs).origin === origin) found.add(abs);\n  } catch (e) {\n    // malformed href, skip\n  }\n}\n\nreturn [{\n  json: {\n    ...prev,\n    internalLinks: Array.from(found).slice(0, 2)\n  }\n}];"
+      }
     }
   ],
   "connections": {
@@ -149,6 +162,13 @@
       "main": [
         [
           { "node": "Sanitize Homepage Text", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Sanitize Homepage Text": {
+      "main": [
+        [
+          { "node": "Find Internal Links", "type": "main", "index": 0 }
         ]
       ]
     }
