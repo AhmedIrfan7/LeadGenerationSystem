@@ -106,6 +106,29 @@
         "language": "javaScript",
         "jsCode": "return { json: $('Normalize Row').item.json };"
       }
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000007",
+      "name": "Call Process Single Lead",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [1560, 300],
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "notes": "MANUAL CHECK AFTER IMPORT: set workflowId to the imported 'Process Single Lead' workflow, and confirm the run mode is 'Run once for each item' (not 'for all items') so one execution = one lead, matching that workflow's single-item assumptions.",
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_PROCESS_SINGLE_LEAD_WORKFLOW_ID",
+          "mode": "list",
+          "cachedResultName": "Process Single Lead"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
     }
   ],
   "connections": {
@@ -141,6 +164,13 @@
       "main": [
         [
           { "node": "Restore Row Data", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Restore Row Data": {
+      "main": [
+        [
+          { "node": "Call Process Single Lead", "type": "main", "index": 0 }
         ]
       ]
     }
