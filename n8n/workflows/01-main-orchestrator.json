@@ -65,6 +65,47 @@
         "language": "javaScript",
         "jsCode": "const row = $json;\n\nlet url = (row.website_url || '').trim();\nif (url && !/^https?:\\/\\//i.test(url)) {\n  url = 'https://' + url;\n}\n\nconst client_email = (row.client_email || '').trim();\nconst emailPrefix = client_email.split('@')[0] || 'there';\nconst client_name = (row.client_name || '').trim() || emailPrefix;\n\nreturn {\n  json: {\n    ...row,\n    website_url: url,\n    client_email,\n    client_name\n  }\n};"
       }
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000005",
+      "name": "Mark Row Processing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/YOUR_SPREADSHEET_ID/values/Leads!D{{ $json.row_number }}?valueInputOption=RAW",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { values: [ ['Processing'] ] } }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PLACEHOLDER",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000006",
+      "name": "Restore Row Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300],
+      "notes": "The Sheets write response overwrote the item JSON. Multiple leads can be in flight per poll cycle, so this must use the paired item (.item), not .first() like Workflow B does.",
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "return { json: $('Normalize Row').item.json };"
+      }
     }
   ],
   "connections": {
@@ -86,6 +127,20 @@
       "main": [
         [
           { "node": "Normalize Row", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Normalize Row": {
+      "main": [
+        [
+          { "node": "Mark Row Processing", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Mark Row Processing": {
+      "main": [
+        [
+          { "node": "Restore Row Data", "type": "main", "index": 0 }
         ]
       ]
     }
