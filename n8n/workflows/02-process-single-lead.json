@@ -542,6 +542,128 @@
         "errorType": "errorMessage",
         "errorMessage": "=Enabling GitHub Pages failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.body) }}"
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-00000000001c",
+      "name": "Wait for Pages Build",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [5520, 140],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 45,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-00000000001d",
+      "name": "Check Pages Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [5740, 140],
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.github.com/repos/AhmedIrfan7/{{ $('Compute Repo Name').first().json.repoName }}/pages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json",
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "PLACEHOLDER",
+          "name": "GitHub PAT"
+        }
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-00000000001e",
+      "name": "Pages Built?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [5960, 140],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.body && $json.body.status }}",
+              "rightValue": "built",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-00000000001f",
+      "name": "Wait Extra for Pages Build",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [6180, 300],
+      "notes": "Best-effort single retry. If still not built after this, we proceed anyway — the URL is deterministic and Pages usually finishes building within a minute or two either way.",
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 20,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000020",
+      "name": "Recheck Pages Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [6400, 300],
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.github.com/repos/AhmedIrfan7/{{ $('Compute Repo Name').first().json.repoName }}/pages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json",
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "PLACEHOLDER",
+          "name": "GitHub PAT"
+        }
+      }
     }
   ],
   "connections": {
@@ -714,9 +836,40 @@
     },
     "Pages Enabled or Already Enabled?": {
       "main": [
-        [],
+        [
+          { "node": "Wait for Pages Build", "type": "main", "index": 0 }
+        ],
         [
           { "node": "Stop: GitHub Pages Enable Failed", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Wait for Pages Build": {
+      "main": [
+        [
+          { "node": "Check Pages Status", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Check Pages Status": {
+      "main": [
+        [
+          { "node": "Pages Built?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Pages Built?": {
+      "main": [
+        [],
+        [
+          { "node": "Wait Extra for Pages Build", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Wait Extra for Pages Build": {
+      "main": [
+        [
+          { "node": "Recheck Pages Status", "type": "main", "index": 0 }
         ]
       ]
     }
