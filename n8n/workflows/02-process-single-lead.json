@@ -236,6 +236,19 @@
         "language": "javaScript",
         "jsCode": "const prev = $input.first().json;\nconst spec = prev.spec;\nconst today = new Date().toISOString().slice(0, 10);\n\nconst readme = `# ${spec.businessName}\\n\\n${spec.tagline || ''}\\n\\nThis static site was automatically generated on ${today} as a redesign preview by an automated lead-generation pipeline.\\n\\n## Files\\n\\n- \\`index.html\\` \\u2014 the site\\n- \\`style.css\\` \\u2014 palette and base styles\\n\\nHosted via GitHub Pages. No build step required \\u2014 edit the HTML/CSS directly.`;\n\nreturn [{ json: { ...prev, files: [...prev.files, { path: 'README.md', content: readme }] } }];"
       }
+    },
+    {
+      "id": "10000000-0000-4000-8000-00000000000f",
+      "name": "Compute Repo Name",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3100, 220],
+      "notes": "Repo name is deterministic from businessName + row_number, so re-running this workflow for the same row always targets the same repo (idempotent retries).",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const prev = $input.first().json;\nconst rowNumber = $('When Called by Orchestrator').first().json.row_number;\n\nconst slug = (prev.businessName || 'site')\n  .toLowerCase()\n  .replace(/[^a-z0-9]+/g, '-')\n  .replace(/^-+|-+$/g, '')\n  .slice(0, 80) || 'site';\n\nconst repoName = `${slug}-lead-${rowNumber}`;\n\nreturn [{ json: { ...prev, repoName } }];"
+      }
     }
   ],
   "connections": {
@@ -323,6 +336,13 @@
       "main": [
         [
           { "node": "Build Site Files (README)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Build Site Files (README)": {
+      "main": [
+        [
+          { "node": "Compute Repo Name", "type": "main", "index": 0 }
         ]
       ]
     }
