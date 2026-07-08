@@ -64,7 +64,7 @@
             },
             {
               "id": "c2",
-              "leftValue": "={{ $json.body ? $json.body.length : 0 }}",
+              "leftValue": "={{ $json.data ? $json.data.length : 0 }}",
               "rightValue": 200,
               "operator": { "type": "number", "operation": "gt" }
             }
@@ -91,7 +91,7 @@
       "position": [900, 220],
       "parameters": {
         "sourceData": "json",
-        "dataPropertyName": "body",
+        "dataPropertyName": "data",
         "extractionValues": {
           "values": [
             { "key": "title", "cssSelector": "title", "returnValue": "text" },
@@ -129,7 +129,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const baseUrl = $('When Called by Orchestrator').first().json.website_url;\nconst html = $('Scrape Homepage').first().json.body || '';\nconst prev = $input.first().json;\n\nconst hrefRegex = /href=[\"']([^\"'#]+)[\"']/gi;\nconst keywords = ['about', 'service', 'contact'];\nconst origin = new URL(baseUrl).origin;\nconst found = new Set();\nlet m;\nwhile ((m = hrefRegex.exec(html)) !== null) {\n  const href = m[1];\n  if (!keywords.some((k) => href.toLowerCase().includes(k))) continue;\n  try {\n    const abs = new URL(href, baseUrl).toString();\n    if (new URL(abs).origin === origin) found.add(abs);\n  } catch (e) {\n    // malformed href, skip\n  }\n}\n\nreturn [{\n  json: {\n    ...prev,\n    internalLinks: Array.from(found).slice(0, 2)\n  }\n}];"
+        "jsCode": "const baseUrl = $('When Called by Orchestrator').first().json.website_url;\nconst html = $('Scrape Homepage').first().json.data || '';\nconst prev = $input.first().json;\n\nconst hrefRegex = /href=[\"']([^\"'#]+)[\"']/gi;\nconst keywords = ['about', 'service', 'contact'];\nconst origin = new URL(baseUrl).origin;\nconst found = new Set();\nlet m;\nwhile ((m = hrefRegex.exec(html)) !== null) {\n  const href = m[1];\n  if (!keywords.some((k) => href.toLowerCase().includes(k))) continue;\n  try {\n    const abs = new URL(href, baseUrl).toString();\n    if (new URL(abs).origin === origin) found.add(abs);\n  } catch (e) {\n    // malformed href, skip\n  }\n}\n\nreturn [{\n  json: {\n    ...prev,\n    internalLinks: Array.from(found).slice(0, 2)\n  }\n}];"
       }
     },
     {
@@ -330,7 +330,7 @@
       "position": [3540, 380],
       "parameters": {
         "errorType": "errorMessage",
-        "errorMessage": "=GitHub repo creation failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.body) }}"
+        "errorMessage": "=GitHub repo creation failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.data) }}"
       }
     },
     {
@@ -409,7 +409,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const shaResp = $json;\nconst orig = $('Split Out Files').item.json;\n\nlet sha;\nif (shaResp.statusCode === 200 && shaResp.body && shaResp.body.sha) {\n  sha = shaResp.body.sha;\n}\n\nreturn {\n  json: {\n    ...orig,\n    contentBase64: Buffer.from(orig.content, 'utf8').toString('base64'),\n    sha\n  }\n};"
+        "jsCode": "const shaResp = $json;\nconst orig = $('Split Out Files').item.json;\n\nlet sha;\nif (shaResp.statusCode === 200 && shaResp.data && shaResp.data.sha) {\n  sha = shaResp.data.sha;\n}\n\nreturn {\n  json: {\n    ...orig,\n    contentBase64: Buffer.from(orig.content, 'utf8').toString('base64'),\n    sha\n  }\n};"
       }
     },
     {
@@ -540,7 +540,7 @@
       "position": [5300, 300],
       "parameters": {
         "errorType": "errorMessage",
-        "errorMessage": "=Enabling GitHub Pages failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.body) }}"
+        "errorMessage": "=Enabling GitHub Pages failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.data) }}"
       }
     },
     {
@@ -606,7 +606,7 @@
           "conditions": [
             {
               "id": "c1",
-              "leftValue": "={{ $json.body && $json.body.status }}",
+              "leftValue": "={{ $json.data && $json.data.status }}",
               "rightValue": "built",
               "operator": { "type": "string", "operation": "equals" }
             }
