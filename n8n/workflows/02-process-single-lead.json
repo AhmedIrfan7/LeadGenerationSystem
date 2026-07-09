@@ -319,7 +319,7 @@
       "position": [3540, 380],
       "parameters": {
         "errorType": "errorMessage",
-        "errorMessage": "=GitHub repo creation failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.data) }}"
+        "errorMessage": "=GitHub repo creation failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.body) }}"
       }
     },
     {
@@ -411,7 +411,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const shaResp = $json;\nconst orig = $('Flatten File Item').item.json;\n\nlet sha;\nif (Number(shaResp.statusCode) === 200 && shaResp.data && shaResp.data.sha) {\n  sha = shaResp.data.sha;\n}\n\nreturn {\n  json: {\n    ...orig,\n    contentBase64: Buffer.from(orig.content, 'utf8').toString('base64'),\n    sha\n  }\n};"
+        "jsCode": "const shaResp = $json;\nconst orig = $('Flatten File Item').item.json;\n\nlet sha;\nif (Number(shaResp.statusCode) === 200 && shaResp.body && shaResp.body.sha) {\n  sha = shaResp.body.sha;\n}\n\nreturn {\n  json: {\n    ...orig,\n    contentBase64: Buffer.from(orig.content, 'utf8').toString('base64'),\n    sha\n  }\n};"
       }
     },
     {
@@ -542,7 +542,7 @@
       "position": [5300, 300],
       "parameters": {
         "errorType": "errorMessage",
-        "errorMessage": "=Enabling GitHub Pages failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.data) }}"
+        "errorMessage": "=Enabling GitHub Pages failed for {{ $('Compute Repo Name').first().json.repoName }} (status {{ $json.statusCode }}): {{ JSON.stringify($json.body) }}"
       }
     },
     {
@@ -608,7 +608,7 @@
           "conditions": [
             {
               "id": "c1",
-              "leftValue": "={{ $json.data && $json.data.status }}",
+              "leftValue": "={{ $json.body && $json.body.status }}",
               "rightValue": "built",
               "operator": { "type": "string", "operation": "equals" }
             }
