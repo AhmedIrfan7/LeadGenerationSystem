@@ -348,6 +348,19 @@
       }
     },
     {
+      "id": "10000000-0000-4000-8000-0000000000fe",
+      "name": "Flatten File Item",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4090, 140],
+      "notes": "Split Out keeps the split element nested under its original field name (files: {path, content}) instead of promoting it to top level. Flatten it here so every downstream node can just read $json.path / $json.content directly.",
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const { files, ...rest } = $json;\nreturn { json: { ...rest, ...files } };"
+      }
+    },
+    {
       "id": "10000000-0000-4000-8000-000000000015",
       "name": "Get Existing File SHA",
       "type": "n8n-nodes-base.httpRequest",
@@ -398,7 +411,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const shaResp = $json;\nconst orig = $('Split Out Files').item.json;\n\nlet sha;\nif (shaResp.statusCode === 200 && shaResp.data && shaResp.data.sha) {\n  sha = shaResp.data.sha;\n}\n\nreturn {\n  json: {\n    ...orig,\n    contentBase64: Buffer.from(orig.content, 'utf8').toString('base64'),\n    sha\n  }\n};"
+        "jsCode": "const shaResp = $json;\nconst orig = $('Flatten File Item').item.json;\n\nlet sha;\nif (shaResp.statusCode === 200 && shaResp.data && shaResp.data.sha) {\n  sha = shaResp.data.sha;\n}\n\nreturn {\n  json: {\n    ...orig,\n    contentBase64: Buffer.from(orig.content, 'utf8').toString('base64'),\n    sha\n  }\n};"
       }
     },
     {
@@ -832,6 +845,13 @@
       ]
     },
     "Split Out Files": {
+      "main": [
+        [
+          { "node": "Flatten File Item", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Flatten File Item": {
       "main": [
         [
           { "node": "Get Existing File SHA", "type": "main", "index": 0 }
