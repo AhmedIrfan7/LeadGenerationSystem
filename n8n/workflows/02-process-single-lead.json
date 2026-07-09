@@ -411,7 +411,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const shaResp = $json;\nconst orig = $('Flatten File Item').item.json;\n\nlet sha;\nif (shaResp.statusCode === 200 && shaResp.data && shaResp.data.sha) {\n  sha = shaResp.data.sha;\n}\n\nreturn {\n  json: {\n    ...orig,\n    contentBase64: Buffer.from(orig.content, 'utf8').toString('base64'),\n    sha\n  }\n};"
+        "jsCode": "const shaResp = $json;\nconst orig = $('Flatten File Item').item.json;\n\nlet sha;\nif (Number(shaResp.statusCode) === 200 && shaResp.data && shaResp.data.sha) {\n  sha = shaResp.data.sha;\n}\n\nreturn {\n  json: {\n    ...orig,\n    contentBase64: Buffer.from(orig.content, 'utf8').toString('base64'),\n    sha\n  }\n};"
       }
     },
     {
