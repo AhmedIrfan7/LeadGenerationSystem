@@ -86,25 +86,14 @@
     {
       "id": "10000000-0000-4000-8000-000000000005",
       "name": "Extract Homepage Content",
-      "type": "n8n-nodes-base.htmlExtract",
-      "typeVersion": 1.2,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [900, 220],
+      "notes": "Regex-based extraction instead of the HTML Extract node, to avoid depending on a node type that may not exist/match on every n8n version.",
       "parameters": {
-        "sourceData": "json",
-        "dataPropertyName": "data",
-        "extractionValues": {
-          "values": [
-            { "key": "title", "cssSelector": "title", "returnValue": "text" },
-            {
-              "key": "metaDescription",
-              "cssSelector": "meta[name='description']",
-              "returnValue": "attribute",
-              "returnAttribute": "content"
-            },
-            { "key": "bodyText", "cssSelector": "body", "returnValue": "text" }
-          ]
-        },
-        "options": {}
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const html = $input.first().json.data || '';\n\nconst titleMatch = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);\nconst title = titleMatch ? titleMatch[1].trim() : '';\n\nconst metaMatch = html.match(/<meta[^>]+name=[\"']description[\"'][^>]*content=[\"']([^\"']*)[\"'][^>]*>/i)\n  || html.match(/<meta[^>]+content=[\"']([^\"']*)[\"'][^>]+name=[\"']description[\"'][^>]*>/i);\nconst metaDescription = metaMatch ? metaMatch[1].trim() : '';\n\nconst bodyMatch = html.match(/<body[^>]*>([\\s\\S]*)<\\/body>/i);\nconst bodyHtml = bodyMatch ? bodyMatch[1] : html;\nconst bodyText = bodyHtml\n  .replace(/<!--[\\s\\S]*?-->/g, ' ')\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/&nbsp;/g, ' ')\n  .replace(/&amp;/g, '&')\n  .replace(/&lt;/g, '<')\n  .replace(/&gt;/g, '>')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nreturn [{ json: { title, metaDescription, bodyText } }];"
       }
     },
     {
@@ -142,7 +131,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const prev = $input.first().json;\nconst links = prev.internalLinks || [];\n\nconst stripHtml = (html) => html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst extraPagesText = [];\nfor (const url of links) {\n  try {\n    const res = await this.helpers.httpRequest({\n      method: 'GET',\n      url,\n      timeout: 10000,\n      returnFullResponse: true\n    });\n    const text = stripHtml(String(res.body || ''));\n    if (text) extraPagesText.push(text.slice(0, 1500));\n  } catch (e) {\n    // best-effort enrichment, skip failed page\n  }\n}\n\nreturn [{\n  json: {\n    ...prev,\n    extraPagesText\n  }\n}];"
+        "jsCode": "const prev = $input.first().json;\nconst links = prev.internalLinks || [];\n\nconst stripHtml = (html) => html\n  .replace(/<!--[\\s\\S]*?-->/g, ' ')\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst extraPagesText = [];\nfor (const url of links) {\n  try {\n    const res = await this.helpers.httpRequest({\n      method: 'GET',\n      url,\n      timeout: 10000,\n      returnFullResponse: true\n    });\n    const text = stripHtml(String(res.body || ''));\n    if (text) extraPagesText.push(text.slice(0, 1500));\n  } catch (e) {\n    // best-effort enrichment, skip failed page\n  }\n}\n\nreturn [{\n  json: {\n    ...prev,\n    extraPagesText\n  }\n}];"
       }
     },
     {
