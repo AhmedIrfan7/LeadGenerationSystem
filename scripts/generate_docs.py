@@ -32,16 +32,16 @@ styles.add(ParagraphStyle(
     textColor=MUTED, alignment=TA_CENTER
 ))
 styles.add(ParagraphStyle(
-    name="H1", fontName="Helvetica-Bold", fontSize=17, leading=22,
-    textColor=INK, spaceBefore=18, spaceAfter=10
+    name="H1", fontName="Helvetica-Bold", fontSize=16, leading=20,
+    textColor=INK, spaceBefore=10, spaceAfter=6
 ))
 styles.add(ParagraphStyle(
-    name="H2", fontName="Helvetica-Bold", fontSize=12.5, leading=17,
-    textColor=ACCENT, spaceBefore=14, spaceAfter=6
+    name="H2", fontName="Helvetica-Bold", fontSize=12, leading=16,
+    textColor=ACCENT, spaceBefore=8, spaceAfter=4
 ))
 styles.add(ParagraphStyle(
-    name="Body", fontName="Helvetica", fontSize=10.2, leading=15.5,
-    textColor=INK, spaceAfter=8, alignment=TA_LEFT
+    name="Body", fontName="Helvetica", fontSize=10.2, leading=14.5,
+    textColor=INK, spaceAfter=5, alignment=TA_LEFT
 ))
 styles.add(ParagraphStyle(
     name="BodySmall", fontName="Helvetica", fontSize=9.3, leading=13.6,
@@ -81,13 +81,13 @@ def placeholder(label, height=6.0):
 
 
 def divider():
-    return HRFlowable(width="100%", thickness=0.6, color=LINE, spaceBefore=2, spaceAfter=14)
+    return HRFlowable(width="100%", thickness=0.6, color=LINE, spaceBefore=1, spaceAfter=8)
 
 
 def bullets(items):
     return ListFlowable(
         [ListItem(Paragraph(i, styles["BulletItem"]), bulletColor=ACCENT) for i in items],
-        bulletType="bullet", start="circle", leftIndent=14, spaceBefore=2, spaceAfter=10
+        bulletType="bullet", start="circle", leftIndent=14, spaceBefore=1, spaceAfter=6
     )
 
 
@@ -97,8 +97,8 @@ def feature_table(rows):
     t.setStyle(TableStyle([
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("LINEBELOW", (0, 0), (-1, -2), 0.5, LINE),
-        ("TOPPADDING", (0, 0), (-1, -1), 7),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
     ]))
     return t
 
@@ -106,10 +106,10 @@ def feature_table(rows):
 story = []
 
 # ---------------- Cover page ----------------
-story.append(Spacer(1, 6.5 * cm))
+story.append(Spacer(1, 5 * cm))
 story.append(Paragraph("Automated Lead Generation System", styles["CoverTitle"]))
 story.append(Paragraph("From a spreadsheet row to a live, deployed website and a client email, with no manual steps in between.", styles["CoverSubtitle"]))
-story.append(Spacer(1, 1.2 * cm))
+story.append(Spacer(1, 0.8 * cm))
 story.append(HRFlowable(width="40%", thickness=1, color=ACCENT, hAlign="CENTER", spaceAfter=14))
 story.append(Paragraph("Prepared by Ahmed Irfan", styles["CoverMeta"]))
 story.append(Paragraph("AI &amp; Automation Team", styles["CoverMeta"]))
@@ -193,7 +193,6 @@ story.append(feature_table([
 ]))
 
 # ---------------- 4. How It Works ----------------
-story.append(PageBreak())
 story.append(Paragraph("4. How It Works: The User Journey", styles["H1"]))
 story.append(divider())
 story.append(Paragraph(
@@ -212,7 +211,6 @@ story.append(bullets([
 ]))
 
 # ---------------- 5. System Architecture ----------------
-story.append(PageBreak())
 story.append(Paragraph("5. System Architecture", styles["H1"]))
 story.append(divider())
 story.append(Paragraph(
@@ -231,7 +229,6 @@ story.append(feature_table([
 ]))
 
 # ---------------- 6. The Four Workflows ----------------
-story.append(PageBreak())
 story.append(Paragraph("6. The Four Workflows", styles["H1"]))
 story.append(divider())
 
@@ -263,7 +260,6 @@ story.append(Paragraph(
     "dashboard never touches the spreadsheet directly.", styles["Body"]))
 
 # ---------------- 7. The Dashboard ----------------
-story.append(PageBreak())
 story.append(Paragraph("7. The Dashboard", styles["H1"]))
 story.append(divider())
 story.append(Paragraph(
@@ -278,7 +274,6 @@ story.append(bullets([
 ]))
 
 # ---------------- 8. Reliability and Error Handling ----------------
-story.append(PageBreak())
 story.append(Paragraph("8. Reliability and Error Handling", styles["H1"]))
 story.append(divider())
 story.append(Paragraph(
@@ -323,7 +318,6 @@ story.append(feature_table([
 ]))
 
 # ---------------- 11. Deployment ----------------
-story.append(PageBreak())
 story.append(Paragraph("11. Deployment", styles["H1"]))
 story.append(divider())
 story.append(Paragraph(
@@ -361,7 +355,6 @@ story.append(bullets([
 ]))
 
 # ---------------- 13. Possible Next Steps ----------------
-story.append(PageBreak())
 story.append(Paragraph("13. Possible Next Steps", styles["H1"]))
 story.append(divider())
 story.append(Paragraph(
