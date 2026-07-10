@@ -411,7 +411,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const shaResp = $json;\nconst orig = $('Flatten File Item').item.json;\n\nlet sha;\nif (Number(shaResp.statusCode) === 200 && shaResp.body && shaResp.body.sha) {\n  sha = shaResp.body.sha;\n}\n\nreturn {\n  json: {\n    ...orig,\n    contentBase64: Buffer.from(orig.content, 'utf8').toString('base64'),\n    sha\n  }\n};"
+        "jsCode": "const shaResp = $json;\nlet orig;\ntry { orig = $('Prepare Write Retry').item.json; } catch (e) { orig = $('Flatten File Item').item.json; }\n\nlet sha;\nif (Number(shaResp.statusCode) === 200 && shaResp.body && shaResp.body.sha) {\n  sha = shaResp.body.sha;\n}\n\nreturn {\n  json: {\n    ...orig,\n    contentBase64: Buffer.from(orig.content, 'utf8').toString('base64'),\n    sha,\n    writeAttempt: orig.writeAttempt || 0\n  }\n};"
       }
     },
     {
@@ -420,7 +420,9 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [4640, 140],
-      "notes": "No retryOnFail deliberately: this is a sha-conditional write. Blindly resending on failure risks reusing a now-stale sha if the first attempt actually landed but the response was lost, causing a spurious 409. A real failure should surface immediately and let the whole lead retry (which re-fetches a fresh sha), not resend stale data internally.",
+      "continueOnFail": true,
+      "alwaysOutputData": true,
+      "notes": "neverError so we can inspect statusCode ourselves and self-heal on 409 (sha conflict) via the retry loop below, instead of blindly resending stale data or dying on the first conflict.",
       "parameters": {
         "method": "PUT",
         "url": "=https://api.github.com/repos/AhmedIrfan7/{{ $json.repoName }}/contents/{{ $json.path }}",
@@ -437,7 +439,14 @@
         "specifyBody": "json",
         "jsonBody": "={{ Object.assign({ message: ($json.sha ? 'Update ' : 'Add ') + $json.path, content: $json.contentBase64 }, $json.sha ? { sha: $json.sha } : {}) }}",
         "options": {
-          "timeout": 20000
+          "timeout": 20000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json",
+              "neverError": true
+            }
+          }
         }
       },
       "credentials": {
@@ -445,6 +454,46 @@
           "id": "PLACEHOLDER",
           "name": "GitHub PAT"
         }
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-0000000000fc",
+      "name": "Write Succeeded?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [4640, 320],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "combinator": "or",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": { "type": "number", "operation": "equals" }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 201,
+              "operator": { "type": "number", "operation": "equals" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "10000000-0000-4000-8000-0000000000fd",
+      "name": "Prepare Write Retry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4420, 480],
+      "notes": "Self-heals sha conflicts (409): re-fetches the current sha and retries the write. Bounded at 2 retries (3 attempts total) before giving up for real.",
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const putResp = $json;\nconst flat = $('Flatten File Item').item.json;\n\nlet prevAttempt = 0;\ntry { prevAttempt = $('Encode File Content').item.json.writeAttempt || 0; } catch (e) {}\n\nconst attempt = prevAttempt + 1;\nif (attempt > 2) {\n  throw new Error('Failed to write ' + flat.path + ' to ' + flat.repoName + ' after ' + attempt + ' attempts: ' + JSON.stringify(putResp.body));\n}\n\nreturn { json: { ...flat, writeAttempt: attempt } };"
       }
     },
     {
@@ -873,7 +922,24 @@
     "Create or Update File": {
       "main": [
         [
+          { "node": "Write Succeeded?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Write Succeeded?": {
+      "main": [
+        [
           { "node": "Collapse After Upload", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Prepare Write Retry", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Prepare Write Retry": {
+      "main": [
+        [
+          { "node": "Get Existing File SHA", "type": "main", "index": 0 }
         ]
       ]
     },
