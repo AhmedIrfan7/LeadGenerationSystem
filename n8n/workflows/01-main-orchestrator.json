@@ -3,16 +3,30 @@
   "nodes": [
     {
       "id": "20000000-0000-4000-8000-000000000001",
-      "name": "Poll Every 5 Minutes",
+      "name": "Poll Every 24 Hours",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 300],
+      "position": [240, 220],
       "parameters": {
         "rule": {
           "interval": [
-            { "field": "minutes", "minutesInterval": 5 }
+            { "field": "hours", "hoursInterval": 24 }
           ]
         }
+      }
+    },
+    {
+      "id": "20000000-0000-4000-8000-00000000000c",
+      "name": "Manual Trigger (Run Now)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 380],
+      "notes": "Called by the dashboard's Run Now button. Responds immediately so the button doesn't hang while leads process in the background — the actual processing continues after the response is sent.",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trigger-now",
+        "responseMode": "onReceived",
+        "options": {}
       }
     },
     {
@@ -235,7 +249,14 @@
     }
   ],
   "connections": {
-    "Poll Every 5 Minutes": {
+    "Poll Every 24 Hours": {
+      "main": [
+        [
+          { "node": "Get Sheet Rows", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Manual Trigger (Run Now)": {
       "main": [
         [
           { "node": "Get Sheet Rows", "type": "main", "index": 0 }
