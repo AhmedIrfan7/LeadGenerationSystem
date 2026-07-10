@@ -210,7 +210,6 @@ story.append(bullets([
     "<b>Step 7, the client is emailed.</b> A professional email is sent automatically with a button linking to their new live preview site.",
     "<b>Step 8, the record is updated.</b> The spreadsheet and the live dashboard both reflect the final result: status, live link, and timestamp.",
 ]))
-story.append(placeholder("Google Sheet showing a lead moving from blank to Done, with the live URL filled in"))
 
 # ---------------- 5. System Architecture ----------------
 story.append(PageBreak())
@@ -230,7 +229,6 @@ story.append(feature_table([
     ("Dashboard API", "A small set of endpoints that let the web dashboard read live lead data and trigger "
                        "retries or on-demand runs, without giving the dashboard direct access to the spreadsheet."),
 ]))
-story.append(placeholder("Full architecture diagram or an overview screenshot of all 4 workflows side by side", height=8))
 
 # ---------------- 6. The Four Workflows ----------------
 story.append(PageBreak())
@@ -243,7 +241,6 @@ story.append(Paragraph(
     "dashboard's Run Now button. It reads the spreadsheet, filters for rows that are new or marked for "
     "retry, and dispatches each one to the Process Single Lead workflow. Once that finishes, it writes "
     "the outcome, success or failure, back to the sheet.", styles["Body"]))
-story.append(placeholder("Lead-Gen Orchestrator workflow canvas"))
 
 story.append(Paragraph("6.2 Process Single Lead", styles["H2"]))
 story.append(Paragraph(
@@ -251,14 +248,12 @@ story.append(Paragraph(
     "GitHub deployment, and emailing the client) happens inside this workflow, once per lead. It is built "
     "so that every step can fail safely: a bad website, a malformed AI response, or a temporary GitHub "
     "error all resolve into a clear, specific error message rather than a silent failure.", styles["Body"]))
-story.append(placeholder("Process Single Lead workflow canvas (full pipeline)", height=8))
 
 story.append(Paragraph("6.3 Error Notifier", styles["H2"]))
 story.append(Paragraph(
     "A dedicated safety-net workflow. It is registered as the official error handler for the two workflows "
     "above, so any uncaught technical failure anywhere in the pipeline immediately emails an administrator "
     "with the workflow name, the exact step that failed, and a direct link to the failed run.", styles["Body"]))
-story.append(placeholder("Error Notifier workflow canvas"))
 
 story.append(Paragraph("6.4 Dashboard API", styles["H2"]))
 story.append(Paragraph(
@@ -266,7 +261,6 @@ story.append(Paragraph(
     "status, one to let a team member manually retry a failed lead, and one to trigger an on-demand run "
     "of the whole pipeline. This keeps the spreadsheet credentials on the automation side only, the "
     "dashboard never touches the spreadsheet directly.", styles["Body"]))
-story.append(placeholder("Dashboard API workflow canvas"))
 
 # ---------------- 7. The Dashboard ----------------
 story.append(PageBreak())
@@ -282,9 +276,6 @@ story.append(bullets([
     "<b>One click retry.</b> Any failed lead can be retried directly from the dashboard, no need to edit the spreadsheet.",
     "<b>Run Now button.</b> Instantly triggers the pipeline to check for new leads, instead of waiting for the automatic schedule.",
 ]))
-story.append(placeholder("Dashboard main screen (stat cards and leads table)", height=8))
-story.append(placeholder("Dashboard showing a completed lead with its live URL"))
-story.append(placeholder("Dashboard showing the Retry button on a failed lead"))
 
 # ---------------- 8. Reliability and Error Handling ----------------
 story.append(PageBreak())
@@ -368,7 +359,6 @@ story.append(bullets([
     "Failure scenarios were deliberately tested, including unreachable websites and write conflicts, to "
     "confirm the system fails safely and recovers automatically where possible.",
 ]))
-story.append(placeholder("Screenshot of a successful end to end test, live deployed site plus received email"))
 
 # ---------------- 13. Possible Next Steps ----------------
 story.append(PageBreak())
