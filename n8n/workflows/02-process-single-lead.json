@@ -761,7 +761,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const data = $input.first().json;\nconst rowNumber = $('When Called by Orchestrator').first().json.row_number;\n\nreturn [{\n  json: {\n    success: true,\n    rowNumber,\n    repoName: data.repoName,\n    liveUrl: data.liveUrl,\n    businessName: data.businessName\n  }\n}];"
+        "jsCode": "const data = $('Compute Live URL').first().json;\nconst rowNumber = $('When Called by Orchestrator').first().json.row_number;\n\nreturn [{\n  json: {\n    success: true,\n    rowNumber,\n    repoName: data.repoName,\n    liveUrl: data.liveUrl,\n    businessName: data.businessName\n  }\n}];"
       }
     }
   ],
