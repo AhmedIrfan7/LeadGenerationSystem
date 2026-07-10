@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { getLeads } from '../lib/api';
+import { getLeads, triggerNow } from '../lib/api';
 import type { Lead } from '../lib/types';
 import StatCards from '../components/StatCards';
 import LeadsTable from '../components/LeadsTable';
@@ -12,6 +12,8 @@ export default function Page() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [triggering, setTriggering] = useState(false);
+  const [triggerMessage, setTriggerMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -31,6 +33,21 @@ export default function Page() {
     return () => clearInterval(id);
   }, [load]);
 
+  async function handleRunNow() {
+    setTriggering(true);
+    setTriggerMessage(null);
+    try {
+      await triggerNow();
+      setTriggerMessage('Triggered — processing started, refreshing below.');
+      await load();
+    } catch (e) {
+      setTriggerMessage(e instanceof Error ? e.message : 'Failed to trigger run');
+    } finally {
+      setTriggering(false);
+      setTimeout(() => setTriggerMessage(null), 6000);
+    }
+  }
+
   return (
     <main className="min-h-screen max-w-5xl mx-auto px-4 sm:px-6 py-10">
       <div className="flex flex-wrap items-baseline justify-between gap-2 mb-8">
@@ -40,10 +57,23 @@ export default function Page() {
             Auto-refreshing every {POLL_INTERVAL_MS / 1000}s
           </p>
         </div>
-        {!loading && !error && (
-          <span className="text-xs text-slate-400">{leads.length} lead{leads.length === 1 ? '' : 's'} tracked</span>
-        )}
+        <div className="flex items-center gap-3">
+          {!loading && !error && (
+            <span className="text-xs text-slate-400">{leads.length} lead{leads.length === 1 ? '' : 's'} tracked</span>
+          )}
+          <button
+            onClick={handleRunNow}
+            disabled={triggering}
+            className="px-4 py-2 rounded-full text-sm font-medium bg-slate-900 text-white disabled:opacity-50"
+          >
+            {triggering ? 'Triggering…' : 'Run Now'}
+          </button>
+        </div>
       </div>
+
+      {triggerMessage && (
+        <p className="text-sm text-slate-600 bg-slate-100 rounded-lg p-3 mb-6">{triggerMessage}</p>
+      )}
 
       {loading ? (
         <p className="text-slate-400 text-sm">Loading…</p>

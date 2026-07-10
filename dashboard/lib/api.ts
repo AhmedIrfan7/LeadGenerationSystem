@@ -30,3 +30,11 @@ export async function retryLead(rowNumber: number): Promise<void> {
     throw new Error(body.error || `Retry failed (${res.status})`);
   }
 }
+
+export async function triggerNow(): Promise<void> {
+  assertBaseUrl();
+  const res = await fetch(`${BASE_URL}/trigger-now`, { method: 'POST' });
+  if (!res.ok) {
+    throw new Error(`Failed to trigger run (${res.status})`);
+  }
+}
