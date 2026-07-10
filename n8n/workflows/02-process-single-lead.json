@@ -420,9 +420,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [4640, 140],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
+      "notes": "No retryOnFail deliberately: this is a sha-conditional write. Blindly resending on failure risks reusing a now-stale sha if the first attempt actually landed but the response was lost, causing a spurious 409. A real failure should surface immediately and let the whole lead retry (which re-fetches a fresh sha), not resend stale data internally.",
       "parameters": {
         "method": "PUT",
         "url": "=https://api.github.com/repos/AhmedIrfan7/{{ $json.repoName }}/contents/{{ $json.path }}",
